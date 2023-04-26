@@ -1,9 +1,12 @@
+import random
 import numpy as np
-from tensorflow.keras.models import Sequential
+from game import Game
+import matplotlib.pyplot as plt
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
-from game import Game
-import random
+from tensorflow.keras.models import Sequential
+
+
 
 # Preproccess the game state
 def preprocess_game_state(map):
@@ -80,13 +83,19 @@ def crossover(agent1, agent2):
         layer_weights1 = agent1.layers[i].get_weights()
         layer_weights2 = agent2.layers[i].get_weights()
 
+        offspring_weights1 = []
+        offspring_weights2 = []
+
         for j in range(len(layer_weights1)):
             mask = np.random.rand(*layer_weights1[j].shape) < 0.5
-            offspring_weights1 = np.where(mask, layer_weights1[j], layer_weights2[j])
-            offspring_weights2 = np.where(mask, layer_weights2[j], layer_weights1[j])
+            offspring_weight1 = np.where(mask, layer_weights1[j], layer_weights2[j])
+            offspring_weight2 = np.where(mask, layer_weights2[j], layer_weights1[j])
 
-            offspring1.layers[i].set_weights([offspring_weights1])
-            offspring2.layers[i].set_weights([offspring_weights2])
+            offspring_weights1.append(offspring_weight1)
+            offspring_weights2.append(offspring_weight2)
+
+        offspring1.layers[i].set_weights(offspring_weights1)
+        offspring2.layers[i].set_weights(offspring_weights2)
 
     return offspring1, offspring2
 
@@ -113,43 +122,64 @@ def roulette_selection(agents, fitnesses):
         if current > pick:
             return agents[i]
 
-# Run the genetic algorithm
+    # Fallback to return the last agent in the list
+    return agents[-1]
+
 def run_genetic_algorithm():
-    population_size = 50
-    num_generations = 100
+    population_size = 20
+    num_generations = 50
     mutation_rate = 0.01
+    elitism_rate = 0.1 
 
     # Create initial population
     population = [create_agent() for _ in range(population_size)]
 
+    average_fitnesses = []  # Store the average fitness of each generation
+
     for gen in range(num_generations):
         print(f"Generation {gen + 1}")
-
-        # Evaluate fitness
-        #fitnesses = [evaluate_agent(agent) for agent in population]
 
         fitnesses = []
         for agent in range(len(population)):
             print("Individual", agent)
             fitnesses.append(evaluate_agent(population[agent]))
 
-        # Select parents and perform crossover and mutation
-        new_population = []
+        average_fitness = sum(fitnesses) / len(fitnesses)
+        average_fitnesses.append(average_fitness)
 
-        for _ in range(population_size // 2):
-            parent1 = roulette_selection(population, fitnesses)
-            parent2 = roulette_selection(population, fitnesses)
+        sorted_indices = np.argsort(fitnesses)[::-1]
+        num_elites = int(elitism_rate * population_size)
+
+        new_population = [population[i] for i in sorted_indices[:num_elites]]
+
+        while len(new_population) < population_size:
+            parent_indices = random.sample(range(population_size), 2)
+            parent1 = population[parent_indices[0]]
+            parent2 = population[parent_indices[1]]
             offspring1, offspring2 = crossover(parent1, parent2)
 
             mutate(offspring1, mutation_rate)
             mutate(offspring2, mutation_rate)
 
-            new_population.append(offspring1)
-            new_population.append(offspring2)
+            group = [parent1, parent2, offspring1, offspring2]
+            group_fitnesses = [fitnesses[parent_indices[0]], fitnesses[parent_indices[1]],
+                               evaluate_agent(offspring1), evaluate_agent(offspring2)]
+
+            selected1 = roulette_selection(group, group_fitnesses)
+            selected2 = roulette_selection(group, group_fitnesses)
+
+            new_population.append(selected1)
+            new_population.append(selected2)
 
         population = new_population
 
-    # Get the best agent from the final population
     best_agent = population[np.argmax(fitnesses)]
+
+    # Plot the average fitness over generations
+    plt.plot(average_fitnesses)
+    plt.xlabel('Generation')
+    plt.ylabel('Average Fitness')
+    plt.title('Average Fitness over Generations')
+    plt.show()
 
     return best_agent
