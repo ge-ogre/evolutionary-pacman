@@ -1,10 +1,10 @@
 import random
 
+
 class Game:
     def __init__(self):
         self.map = self.create_map()
         self.score = 0
-        self.length = 0
         self.is_over = False
 
     def create_map(self):
@@ -45,28 +45,28 @@ class Game:
         if direction == "1" and self.map[thing_row - 1][thing_column] != "#":
             # move up
             if self.map[thing_row - 1][thing_column] == "0" and thing_type == "player":
-                self.score += 1
+                self.score += 3
             self.map[thing_row][thing_column] = replace
             self.map[thing_row - 1][thing_column] = "1"
 
         elif direction == "2" and self.map[thing_row][thing_column + 1] != "#":
             # move right
             if self.map[thing_row][thing_column + 1] == "0" and thing_type == "player":
-                self.score += 1
+                self.score += 3
             self.map[thing_row][thing_column] = replace
             self.map[thing_row][thing_column + 1] = "1"
 
         elif direction == "3" and self.map[thing_row + 1][thing_column] != "#":
             # move down
             if self.map[thing_row + 1][thing_column] == "0" and thing_type == "player":
-                self.score += 1
+                self.score += 3
             self.map[thing_row][thing_column] = replace
             self.map[thing_row + 1][thing_column] = "1"
 
         elif direction == "4" and self.map[thing_row][thing_column - 1] != "#":
             # move left
             if self.map[thing_row][thing_column - 1] == "0" and thing_type == "player":
-                self.score += 1
+                self.score += 3
             self.map[thing_row][thing_column] = replace
             self.map[thing_row][thing_column - 1] = "1"
         else:
@@ -83,7 +83,7 @@ class Game:
         else:
             pass
 
-        self.length += 1
+        self.score -= 1
         self.is_over = self.check_is_over()
 
     def move_ghosts(self):

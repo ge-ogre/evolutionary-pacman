@@ -1,4 +1,5 @@
 from game import Game
+from ga_algo import run_genetic_algorithm
 
 def open_game():
     print("Welcome to Pacman for the terminal!")
@@ -23,6 +24,9 @@ def start_player_game():
     print("Starting Player Input Game...")
     print("Controls: 1 = up, 2 = right, 3 = down, 4 = left")
     game.play_game()
+
+def start_genetic_game():
+    run_genetic_algorithm()
 
 if __name__ == "__main__":
     open_game()
