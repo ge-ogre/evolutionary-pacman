@@ -42,28 +42,28 @@ class Game:
             replace = "0"
 
         # 1 = N, 2 = E, 3 = S, 4 = W
-        if direction == "1" and self.map[thing_row - 1][thing_column] != "#":
+        if direction == "1" and thing_row > 0 and self.map[thing_row - 1][thing_column] != "#":
             # move up
             if self.map[thing_row - 1][thing_column] == "0" and thing_type == "player":
                 self.score += 3
             self.map[thing_row][thing_column] = replace
             self.map[thing_row - 1][thing_column] = "1"
 
-        elif direction == "2" and self.map[thing_row][thing_column + 1] != "#":
+        elif direction == "2" and thing_column < len(self.map[0]) - 1 and self.map[thing_row][thing_column + 1] != "#":
             # move right
             if self.map[thing_row][thing_column + 1] == "0" and thing_type == "player":
                 self.score += 3
             self.map[thing_row][thing_column] = replace
             self.map[thing_row][thing_column + 1] = "1"
 
-        elif direction == "3" and self.map[thing_row + 1][thing_column] != "#":
+        elif direction == "3" and thing_row < len(self.map) - 1 and self.map[thing_row + 1][thing_column] != "#":
             # move down
             if self.map[thing_row + 1][thing_column] == "0" and thing_type == "player":
                 self.score += 3
             self.map[thing_row][thing_column] = replace
             self.map[thing_row + 1][thing_column] = "1"
 
-        elif direction == "4" and self.map[thing_row][thing_column - 1] != "#":
+        elif direction == "4" and thing_column > 0 and self.map[thing_row][thing_column - 1] != "#":
             # move left
             if self.map[thing_row][thing_column - 1] == "0" and thing_type == "player":
                 self.score += 3
@@ -79,12 +79,12 @@ class Game:
         player_row, player_column = self.get_thing_position("1")
         # then we move the player
         if self.move_thing("player", player_row, player_column, direction) == 420:
-            print("Invalid move. Please try again.")
+            #print("Invalid move. Please try again.")
+            self.is_over = True
         else:
             pass
 
         self.score -= 1
-        self.is_over = self.check_is_over()
 
     def move_ghosts(self):
         for ghost in ["a", "b", "c", "d"]:

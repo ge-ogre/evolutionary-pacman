@@ -3,6 +3,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 from game import Game
+import random
 
 # Preproccess the game state
 def preprocess_game_state(map):
@@ -32,7 +33,7 @@ def preprocess_game_state(map):
 # Create a neural network model
 def create_agent():
     model = Sequential()
-    model.add(Dense(32, input_dim=9, activation='relu'))
+    model.add(Dense(32, input_dim=10, activation='relu'))
     model.add(Dense(16, activation='relu'))
     model.add(Dense(4, activation='softmax'))
     return model
@@ -46,16 +47,29 @@ def evaluate_agent(agent):
 def play_agent(game, agent):
     print("Starting Agent Game...")
     while(not game.is_over):
-        game.display_game()
         direction = get_next_move_agent(agent, game.map)
-        game.move_player(direction)
+        print(direction)
         game.is_over = game.check_is_over()
+        game.move_player(str(int(direction)))
+        game.display_game()
 
 def get_next_move_agent(agent, map):
     game_state = preprocess_game_state(map)
-    action_list = agent.predict(np.array([game_state]))
-    prediction = np.argmax(action_list) + 1
-    return prediction
+    action_probabilities = agent.predict(np.array([game_state]))[0]
+
+    # Normalize the probabilities
+    normalized_probs = action_probabilities / np.sum(action_probabilities)
+
+    # Implement roulette wheel selection
+    random_val = random.random()
+    cum_sum = 0
+    for index, prob in enumerate(normalized_probs):
+        cum_sum += prob
+        if cum_sum > random_val:
+            return index + 1
+
+    # Fallback to the max value in case the loop doesn't return
+    return np.argmax(action_probabilities) + 1
 
 # Perform uniform crossover
 def crossover(agent1, agent2):
@@ -112,7 +126,12 @@ def run_genetic_algorithm():
         print(f"Generation {gen + 1}")
 
         # Evaluate fitness
-        fitnesses = [evaluate_agent(agent) for agent in population]
+        #fitnesses = [evaluate_agent(agent) for agent in population]
+
+        fitnesses = []
+        for agent in range(len(population)):
+            print("Individual", agent)
+            fitnesses.append(evaluate_agent(population[agent]))
 
         # Select parents and perform crossover and mutation
         new_population = []
