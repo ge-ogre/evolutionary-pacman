@@ -6,8 +6,6 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Sequential
 
-
-
 # Preproccess the game state
 def preprocess_game_state(map):
     game_state = []
@@ -34,16 +32,19 @@ def preprocess_game_state(map):
     return game_state
 
 # Create a neural network model
-def create_agent():
+def create_agent(map):
+    input_dim = len(map["map"]) * len(map["map"][0])
+
     model = Sequential()
-    model.add(Dense(32, input_dim=10, activation='relu'))
+    model.add(Dense(32, input_dim=input_dim, activation='relu'))
     model.add(Dense(16, activation='relu'))
+    # one output node for each direction
     model.add(Dense(4, activation='softmax'))
     return model
 
 # Evaluate the agent's performance
-def evaluate_agent(agent):
-    game = Game()
+def evaluate_agent(agent, map):
+    game = Game({ k:v for (k,v) in map.items() })
     play_agent(game, agent)
     return game.score
 
@@ -52,9 +53,10 @@ def play_agent(game, agent):
     while(not game.is_over):
         direction = get_next_move_agent(agent, game.map)
         print(direction)
-        game.is_over = game.check_is_over()
         game.move_player(str(int(direction)))
+        game.move_ghosts()
         game.display_game()
+        game.is_over = game.check_is_over()
 
 def get_next_move_agent(agent, map):
     game_state = preprocess_game_state(map)
@@ -75,9 +77,9 @@ def get_next_move_agent(agent, map):
     return np.argmax(action_probabilities) + 1
 
 # Perform uniform crossover
-def crossover(agent1, agent2):
-    offspring1 = create_agent()
-    offspring2 = create_agent()
+def crossover(agent1, agent2, map):
+    offspring1 = create_agent(map)
+    offspring2 = create_agent(map)
 
     for i in range(len(agent1.layers)):
         layer_weights1 = agent1.layers[i].get_weights()
@@ -125,14 +127,14 @@ def roulette_selection(agents, fitnesses):
     # Fallback to return the last agent in the list
     return agents[-1]
 
-def run_genetic_algorithm():
+def run_genetic_algorithm(map):
     population_size = 20
     num_generations = 50
     mutation_rate = 0.01
     elitism_rate = 0.1 
 
     # Create initial population
-    population = [create_agent() for _ in range(population_size)]
+    population = [create_agent(map) for _ in range(population_size)]
 
     average_fitnesses = []  # Store the average fitness of each generation
 
@@ -142,7 +144,7 @@ def run_genetic_algorithm():
         fitnesses = []
         for agent in range(len(population)):
             print("Individual", agent)
-            fitnesses.append(evaluate_agent(population[agent]))
+            fitnesses.append(evaluate_agent(population[agent], map))
 
         average_fitness = sum(fitnesses) / len(fitnesses)
         average_fitnesses.append(average_fitness)
@@ -156,14 +158,14 @@ def run_genetic_algorithm():
             parent_indices = random.sample(range(population_size), 2)
             parent1 = population[parent_indices[0]]
             parent2 = population[parent_indices[1]]
-            offspring1, offspring2 = crossover(parent1, parent2)
+            offspring1, offspring2 = crossover(parent1, parent2, map)
 
             mutate(offspring1, mutation_rate)
             mutate(offspring2, mutation_rate)
 
             group = [parent1, parent2, offspring1, offspring2]
             group_fitnesses = [fitnesses[parent_indices[0]], fitnesses[parent_indices[1]],
-                               evaluate_agent(offspring1), evaluate_agent(offspring2)]
+                               evaluate_agent(offspring1, map), evaluate_agent(offspring2, map)]
 
             selected1 = roulette_selection(group, group_fitnesses)
             selected2 = roulette_selection(group, group_fitnesses)
