@@ -1,10 +1,11 @@
 import random
+import copy
 from ghost import Ghost
 
 
 class Game:
     def __init__(self, map): 
-        self.map = [x for x in { k:v for (k,v) in map.items() }["map"]]
+        self.map = copy.deepcopy(map["map"])
         self.score = 0
         self.is_over = False
         self.ghosts = []

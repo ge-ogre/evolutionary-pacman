@@ -128,8 +128,8 @@ def roulette_selection(agents, fitnesses):
     return agents[-1]
 
 def run_genetic_algorithm(map):
-    population_size = 20
-    num_generations = 50
+    population_size = 50
+    num_generations = 100
     mutation_rate = 0.01
     elitism_rate = 0.1 
 
