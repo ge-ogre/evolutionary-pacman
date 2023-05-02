@@ -13,8 +13,9 @@ def open_game():
     print("Select a map:")
     print("1. Small Map")
     print("2. Line Map")
+    print("3. Symmetry Map")
     selected_map = ""
-    while (selected_map != "1" and selected_map != "2"):
+    while (selected_map != "1" and selected_map != "2" and selected_map != "3"):
         selected_map = input("Select a map: ")
     selected_map = maps.create_map(selected_map)
     if mode == "1":

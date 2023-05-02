@@ -43,20 +43,23 @@ def create_agent(map):
     return model
 
 # Evaluate the agent's performance
-def evaluate_agent(agent, map):
-    game = Game({ k:v for (k,v) in map.items() })
-    play_agent(game, agent)
+def evaluate_agent(agent, map, generation):
+    game = Game({k: v for (k, v) in map.items()})
+    max_turns = generation * 10
+    play_agent(game, agent, max_turns)
     return game.score
 
-def play_agent(game, agent):
+def play_agent(game, agent, max_turns):
     print("Starting Agent Game...")
-    while(not game.is_over):
+    turns = 0
+    while not game.is_over and turns < max_turns:
         direction = get_next_move_agent(agent, game.map)
         print(direction)
         game.move_player(str(int(direction)))
         game.move_ghosts()
         game.display_game()
         game.is_over = game.check_is_over()
+        turns += 1
 
 def get_next_move_agent(agent, map):
     game_state = preprocess_game_state(map)
@@ -128,8 +131,8 @@ def roulette_selection(agents, fitnesses):
     return agents[-1]
 
 def run_genetic_algorithm(map):
-    population_size = 50
-    num_generations = 100
+    population_size = 10
+    num_generations = 25
     mutation_rate = 0.01
     elitism_rate = 0.1 
 
@@ -144,7 +147,7 @@ def run_genetic_algorithm(map):
         fitnesses = []
         for agent in range(len(population)):
             print("Individual", agent)
-            fitnesses.append(evaluate_agent(population[agent], map))
+            fitnesses.append(evaluate_agent(population[agent], map, gen + 1))
 
         average_fitness = sum(fitnesses) / len(fitnesses)
         average_fitnesses.append(average_fitness)
@@ -165,7 +168,7 @@ def run_genetic_algorithm(map):
 
             group = [parent1, parent2, offspring1, offspring2]
             group_fitnesses = [fitnesses[parent_indices[0]], fitnesses[parent_indices[1]],
-                               evaluate_agent(offspring1, map), evaluate_agent(offspring2, map)]
+                               evaluate_agent(offspring1, map, gen+1), evaluate_agent(offspring2, map, gen+1)]
 
             selected1 = roulette_selection(group, group_fitnesses)
             selected2 = roulette_selection(group, group_fitnesses)

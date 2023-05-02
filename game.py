@@ -11,6 +11,7 @@ class Game:
         self.ghosts = []
         self.pellet_worth = 3
         self.time_penalty = 1
+        self.wall_penalty = 3
         for ghost in { k:v for (k,v) in map.items() }["ghosts"]:
             self.ghosts.append(Ghost(ghost))
 
@@ -26,6 +27,11 @@ class Game:
             # first, we add points for score if the player eats a pellet
             if self.map[thing_row - 1][thing_column] == "0" and thing_type == "1":
                 self.score += self.pellet_worth
+            # then we should check if the player just stepped on a ghost
+            # if so, the game is over
+            if self.map[thing_row - 1][thing_column] == "a" and thing_type == "1":
+                self.is_over = True
+                return (thing_row, thing_column)
             # then we must check what to replace the thing with
             # if player, we always replace with empty space
             # if ghost, we replace with whatever it was standing on
@@ -42,6 +48,9 @@ class Game:
             # move right
             if self.map[thing_row][thing_column + 1] == "0" and thing_type == "1":
                 self.score += self.pellet_worth
+            if self.map[thing_row][thing_column + 1] == "a" and thing_type == "1":
+                self.is_over = True
+                return (thing_row, thing_column)
             if thing_type != "1":
                 ghost = self.get_ghost(thing_type)
                 replace = ghost.currently_standing
@@ -53,6 +62,9 @@ class Game:
             # move down
             if self.map[thing_row + 1][thing_column] == "0" and thing_type == "1":
                 self.score += self.pellet_worth
+            if self.map[thing_row + 1][thing_column] == "a" and thing_type == "1":
+                self.is_over = True
+                return (thing_row, thing_column)
             if thing_type != "1":
                 ghost = self.get_ghost(thing_type)
                 replace = ghost.currently_standing
@@ -64,6 +76,9 @@ class Game:
             # move left
             if self.map[thing_row][thing_column - 1] == "0" and thing_type == "1":
                 self.score += self.pellet_worth
+            if self.map[thing_row][thing_column - 1] == "a" and thing_type == "1":
+                self.is_over = True
+                return (thing_row, thing_column)
             if thing_type != "1":
                 ghost = self.get_ghost(thing_type)
                 replace = ghost.currently_standing
@@ -81,7 +96,9 @@ class Game:
         # then we move the player
         if self.move_thing("1", player_row, player_column, direction) == 420:
             #print("Invalid move. Please try again.")
-            self.is_over = True
+            #self.is_over = True
+            self.score -= self.wall_penalty
+            pass
         self.score -= self.time_penalty
 
     def move_ghosts(self):
