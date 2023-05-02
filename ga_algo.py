@@ -45,7 +45,7 @@ def create_agent(map):
 # Evaluate the agent's performance
 def evaluate_agent(agent, map, generation):
     game = Game({k: v for (k, v) in map.items()})
-    max_turns = generation * 10
+    max_turns = generation * 4
     play_agent(game, agent, max_turns)
     return game.score
 
@@ -131,8 +131,8 @@ def roulette_selection(agents, fitnesses):
     return agents[-1]
 
 def run_genetic_algorithm(map):
-    population_size = 10
-    num_generations = 25
+    population_size = 2
+    num_generations = 5
     mutation_rate = 0.01
     elitism_rate = 0.1 
 
@@ -140,6 +140,7 @@ def run_genetic_algorithm(map):
     population = [create_agent(map) for _ in range(population_size)]
 
     average_fitnesses = []  # Store the average fitness of each generation
+    best_fitnesses = []  # Store the best fitness of each generation
 
     for gen in range(num_generations):
         print(f"Generation {gen + 1}")
@@ -156,6 +157,8 @@ def run_genetic_algorithm(map):
         num_elites = int(elitism_rate * population_size)
 
         new_population = [population[i] for i in sorted_indices[:num_elites]]
+        best_fitnesses.append(fitnesses[sorted_indices[0]])
+        print("Best fitness for generation:", fitnesses[sorted_indices[0]])
 
         while len(new_population) < population_size:
             parent_indices = random.sample(range(population_size), 2)
@@ -181,10 +184,11 @@ def run_genetic_algorithm(map):
     best_agent = population[np.argmax(fitnesses)]
 
     # Plot the average fitness over generations
-    plt.plot(average_fitnesses)
+    plt.plot(average_fitnesses, label="Average Fitness")
+    plt.plot(best_fitnesses, label="Best Fitness")
     plt.xlabel('Generation')
-    plt.ylabel('Average Fitness')
-    plt.title('Average Fitness over Generations')
+    plt.ylabel('Fitness')
+    plt.title('Fitness over Generations')
     plt.show()
 
     return best_agent
