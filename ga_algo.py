@@ -7,6 +7,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Sequential
 
 # Preproccess the game state
+# used for a representation which passes in the entire map
 def preprocess_game_state(map):
     game_state = []
 
@@ -31,9 +32,56 @@ def preprocess_game_state(map):
 
     return game_state
 
+# used in a second representation which will pass in local information relevant to the player
+def retrieve_features(game):
+    # features:
+    # player's x and y positions (2)
+    # ghost's x and y positions (2 for each ghost)
+    # distance between player and ghost (1)
+    # distance between player and nearest pellet (1)
+    # player's surrounding tiles (4)
+    # retrieve the player's position
+    player_row, player_column = game.get_thing_position("1")
+    # retrieve the ghost's positions
+    # hardcoded to get the "a" ghost for now
+    ghost_row, ghost_column = game.get_thing_position("a")
+    # retrieve the nearest pellet's position
+    pellet_row, pellet_column = game.get_nearest_pellet_position()
+    # retrieve the player's surrounding tiles
+    up = game.map[player_row - 1][player_column]
+    right = game.map[player_row][player_column + 1]
+    down = game.map[player_row + 1][player_column]
+    left = game.map[player_row][player_column - 1]
+    # calculate the distance between the player and the ghost
+    distance_player_ghost = abs(player_row - ghost_row) + abs(player_column - ghost_column)
+    # calculate the distance between the player and the nearest pellet
+    distance_player_pellet = abs(player_row - pellet_row) + abs(player_column - pellet_column)
+    # 10 features in total
+    # must convert these into numbers for the neural network
+    input_vector = [player_row, player_column, ghost_row, ghost_column, distance_player_ghost, distance_player_pellet, up, right, down, left]
+    for i in range(len(input_vector)):
+        if input_vector[i] == '_':
+            input_vector[i] = 0
+        elif input_vector[i] == '#':
+            input_vector[i] = 1
+        elif input_vector[i] == '0':
+            input_vector[i] = 2
+        elif input_vector[i] == '1':
+            input_vector[i] = 3
+        elif input_vector[i] == 'a':
+            input_vector[i] = 4
+        elif input_vector[i] == 'b':
+            input_vector[i] = 5
+    input_vector = [int(i) for i in input_vector]
+    input_vector = np.array(input_vector)
+    return input_vector
+
 # Create a neural network model
 def create_agent(map):
+    # input dim for representation 1
     input_dim = len(map["map"]) * len(map["map"][0])
+    # input dim for representation 2
+    # input_dim = 10
 
     model = Sequential()
     model.add(Dense(32, input_dim=input_dim, activation='relu'))
@@ -44,7 +92,7 @@ def create_agent(map):
 
 # Evaluate the agent's performance
 def evaluate_agent(agent, map, generation):
-    game = Game({k: v for (k, v) in map.items()})
+    game = Game(map)
     max_turns = generation * 10
     play_agent(game, agent, max_turns)
     return game.score
@@ -53,6 +101,7 @@ def play_agent(game, agent, max_turns):
     print("Starting Agent Game...")
     turns = 0
     while not game.is_over and turns < max_turns:
+        # must change game to game.map if using representation 1
         direction = get_next_move_agent(agent, game.map)
         print(direction)
         game.move_player(str(int(direction)))
@@ -62,7 +111,11 @@ def play_agent(game, agent, max_turns):
         turns += 1
 
 def get_next_move_agent(agent, map):
+    # game state for representation 1
     game_state = preprocess_game_state(map)
+    # game state for representation 2
+    # game_state = retrieve_features(game)
+    print(game_state)
     action_probabilities = agent.predict(np.array([game_state]))[0]
 
     # Normalize the probabilities
@@ -131,8 +184,8 @@ def roulette_selection(agents, fitnesses):
     return agents[-1]
 
 def run_genetic_algorithm(map):
-    population_size = 10
-    num_generations = 25
+    population_size = 5
+    num_generations = 15
     mutation_rate = 0.01
     elitism_rate = 0.1 
 

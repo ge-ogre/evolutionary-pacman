@@ -2,16 +2,17 @@ import random
 import copy
 from ghost import Ghost
 
-
 class Game:
     def __init__(self, map): 
         self.map = copy.deepcopy(map["map"])
         self.score = 0
         self.is_over = False
         self.ghosts = []
-        self.pellet_worth = 3
+        self.pellet_worth = 5
         self.time_penalty = 1
-        self.wall_penalty = 3
+        self.wall_penalty = 2
+        self.ghost_penalty = 25
+        self.win_bonus = 100
         for ghost in { k:v for (k,v) in map.items() }["ghosts"]:
             self.ghosts.append(Ghost(ghost))
 
@@ -31,6 +32,7 @@ class Game:
             # if so, the game is over
             if self.map[thing_row - 1][thing_column] == "a" and thing_type == "1":
                 self.is_over = True
+                self.score -= self.ghost_penalty
                 return (thing_row, thing_column)
             # then we must check what to replace the thing with
             # if player, we always replace with empty space
@@ -50,6 +52,7 @@ class Game:
                 self.score += self.pellet_worth
             if self.map[thing_row][thing_column + 1] == "a" and thing_type == "1":
                 self.is_over = True
+                self.score -= self.ghost_penalty
                 return (thing_row, thing_column)
             if thing_type != "1":
                 ghost = self.get_ghost(thing_type)
@@ -64,6 +67,7 @@ class Game:
                 self.score += self.pellet_worth
             if self.map[thing_row + 1][thing_column] == "a" and thing_type == "1":
                 self.is_over = True
+                self.score -= self.ghost_penalty
                 return (thing_row, thing_column)
             if thing_type != "1":
                 ghost = self.get_ghost(thing_type)
@@ -78,6 +82,7 @@ class Game:
                 self.score += self.pellet_worth
             if self.map[thing_row][thing_column - 1] == "a" and thing_type == "1":
                 self.is_over = True
+                self.score -= self.ghost_penalty
                 return (thing_row, thing_column)
             if thing_type != "1":
                 ghost = self.get_ghost(thing_type)
@@ -123,6 +128,21 @@ class Game:
             if ghost.type == type:
                 return ghost
 
+    def get_nearest_pellet_position(self):
+        player_row, player_column = self.get_thing_position("1")
+        nearest_pellet_row = 0
+        nearest_pellet_column = 0
+        nearest_pellet_distance = 100
+        for row in range(len(self.map)):
+            for column in range(len(self.map[row])):
+                if self.map[row][column] == "0":
+                    distance = abs(player_row - row) + abs(player_column - column)
+                    if distance < nearest_pellet_distance:
+                        nearest_pellet_row = row
+                        nearest_pellet_column = column
+                        nearest_pellet_distance = distance
+        return (nearest_pellet_row, nearest_pellet_column)
+
     def check_is_over(self):
         if self.is_over: 
             self.display_score()
@@ -130,6 +150,7 @@ class Game:
         # check if any ghosts are currenlty on the player
         for ghost in self.ghosts:
             if ghost.currently_standing == "1":
+                self.score -= self.ghost_penalty
                 self.display_score()
                 return True
         # check if there are any pellets left

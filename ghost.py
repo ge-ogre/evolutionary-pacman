@@ -20,7 +20,7 @@ class Ghost:
             elif self.type == "a": # blinky-ish
                 self.direction = self.get_closest_direction(player_row, player_column, ghost_row, ghost_column, viable_directions)
             self.viable_directions = viable_directions
-    
+
     def get_viable_directions(self, map, ghost_row, ghost_column):
         viable_directions = []
         row = ghost_row
@@ -37,14 +37,37 @@ class Ghost:
             viable_directions.append("4")
         return viable_directions
 
-    def get_closest_direction(self, player_row, player_column, ghost_row, ghost_column, viable_directions):
-        if viable_directions == []:
-            return 0
-        else:
-            # sorts list of viable directions, takes the one with the lowest distance
-            closest_direction = sorted(viable_directions, key = lambda direction: self.get_distance(player_row, player_column, ghost_row, ghost_column, direction), reverse=True)[0]
-            return closest_direction
+    # def get_closest_direction(self, player_row, player_column, ghost_row, ghost_column, viable_directions):
+    #     if viable_directions == []:
+    #         return 0
+    #     else:
+    #         # sorts list of viable directions, takes the one with the lowest distance
+    #         closest_direction = sorted(viable_directions, key = lambda direction: self.get_distance(player_row, player_column, ghost_row, ghost_column, direction), reverse=True)[0]
+    #         print(sorted(viable_directions, key = lambda direction: self.get_distance(player_row, player_column, ghost_row, ghost_column, direction), reverse=True))
+    #         return closest_direction
     
+    def get_closest_direction(self, player_row, player_column, ghost_row, ghost_column, viable_directions):
+        if not viable_directions:
+            return 0
+
+        horizontal_diff = player_column - ghost_column
+        vertical_diff = player_row - ghost_row
+
+        if abs(horizontal_diff) > abs(vertical_diff):
+            if horizontal_diff > 0 and "2" in viable_directions:
+                return "2"  # move right
+            elif horizontal_diff < 0 and "4" in viable_directions:
+                return "4"  # move left
+        else:
+            if vertical_diff > 0 and "3" in viable_directions:
+                return "3"  # move down
+            elif vertical_diff < 0 and "1" in viable_directions:
+                return "1"  # move up
+
+        # If the preferred direction is not in viable_directions, choose a random direction
+        return random.choice(viable_directions)
+
+
     def get_distance(self, player_row, player_column, ghost_row, ghost_column, direction):
         row = ghost_row
         column = ghost_column
