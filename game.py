@@ -168,12 +168,25 @@ class Game:
     def display_score(self):
         print(f"Your score was: {self.score}")
 
-    def play_game(self):
-        print("Starting Player Input Game...")
-        self.display_game()
-        while(not self.is_over):
-            direction = input("Enter a direction: ")
-            self.move_player(direction)
-            self.move_ghosts()
+    def play_game(self, renderer=None):
+        if renderer:
+            print("Starting Graphical Player Input Game...")
+            renderer.draw_state(self)
+            while not self.is_over:
+                direction = None
+                while direction is None:
+                    direction = renderer.handle_events()
+                self.move_player(direction)
+                self.move_ghosts()
+                renderer.draw_state(self)
+                self.is_over = self.check_is_over()
+                renderer.clock.tick(10) # Limit frame rate for better control
+        else:
+            print("Starting Player Input Game...")
             self.display_game()
-            self.is_over = self.check_is_over()
+            while(not self.is_over):
+                direction = input("Enter a direction: ")
+                self.move_player(direction)
+                self.move_ghosts()
+                self.display_game()
+                self.is_over = self.check_is_over()
