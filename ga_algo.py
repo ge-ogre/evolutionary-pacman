@@ -97,16 +97,28 @@ def evaluate_agent(agent, map, generation):
     play_agent(game, agent, max_turns)
     return game.score
 
-def play_agent(game, agent, max_turns):
-    print("Starting Agent Game...")
+def play_agent(game, agent, max_turns, renderer=None):
+    if renderer:
+        print("Starting Graphical Agent Game...")
+        renderer.draw_state(game)
+    else:
+        print("Starting Agent Game...")
+    
     turns = 0
     while not game.is_over and turns < max_turns:
         # must change game to game.map if using representation 1
         direction = get_next_move_agent(agent, game.map)
-        print(direction)
+        # print(direction)
         game.move_player(str(int(direction)))
         game.move_ghosts()
-        game.display_game()
+        
+        if renderer:
+            renderer.handle_events() # pump events
+            renderer.draw_state(game)
+            renderer.wait(100) # Small delay to see the moves
+        else:
+            game.display_game()
+            
         game.is_over = game.check_is_over()
         turns += 1
 
